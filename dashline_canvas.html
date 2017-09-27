@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>dashline_canvas</title>
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+        .toolbar {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            background: #fff;
+            color: #000;
+            opacity: 0.85;
+        }
+    </style>
+    <script type="text/javascript" src="js/animation.js"></script>
+</head>
+<body>
+    <div class="toolbar">
+        自定义虚线<input name="selType" type="radio" value="0" checked="1" onclick="selectTypeFunc(0)" />系统虚线<input name="selType" type="radio" value="1" onclick="selectTypeFunc(1)" />
+    </div>
+    <canvas id="arrowCanvas" style="width: 100%; height: 100%;border: solid 1px gray"></canvas>
+    <script type="text/javascript">
+        // 纯Demo，封装性和OOP都不考虑
+        var winWidth = window.innerWidth;
+        var winHeight = window.innerHeight;
+        var cvs = document.querySelector('#arrowCanvas');
+        cvs.width = winWidth;
+        cvs.height = winHeight;
+        var ctx = arrowCanvas.getContext('2d');
+        var scale = 1;
+        var curScale = scale;
+        var preScale = scale;
+        var zoomCenterX = 0;
+        var zoomCenterY = 0;
+        var selectType = 0;
+        var pts = [{x: 50,y: 50}, {x: 100,y: 50},
+            {x: 100, y: 500}, {x: 200,y: 400},
+            {x: 500,y: 500}, {x: 650,y: 300}
+        ];
+
+        cvs.addEventListener('mousewheel', function (evt) {
+            // 判断是否是放大状态
+            var wheelDelta = evt.wheelDelta;
+            var isZoomIn = false;
+            if (wheelDelta > 0) {
+                isZoomIn =  true;
+            }
+
+
+            if (window.zoomAni) {
+                return;
+            }
+
+            scale = isZoomIn ? scale * 2 : scale / 2;
+            var diff = scale - preScale;
+            zoomCenterX = evt.offsetX || 0;
+            zoomCenterY = evt.offsetY || 0;
+
+            window.zoomAni = new Animation({
+                duration: 500,
+                fps: 60,
+                render: function (s) {
+                    curScale = preScale + diff * s;// global var
+                    drawArrowLine(ctx, pts);
+                },
+                finish: function () {
+                    preScale = scale;
+                    window.zoomAni = null;
+                },
+                onStop: function (s) {
+                    preScale = scale;
+                    window.zoomAni = null;
+                }
+            });
+        });
+
+        drawArrowLine(ctx, pts);
+
+        function drawArrowLine(ctx, pts) {
+            ctx.clearRect(0, 0, winWidth, winHeight);
+            drawBack(ctx, pts);
+
+            if (selectType === 0) {
+                drawFrontByUserDefine(ctx, pts);
+            } else {
+                drawFrontBySystem(ctx, pts);
+            }
+        }
+
+        function drawBack(ctx, pts) {
+            ctx.save();
+            ctx.translate(zoomCenterX, zoomCenterY);
+            ctx.beginPath();
+            ctx.moveTo((pts[0].x - zoomCenterX) * curScale,
+                (pts[0].y - zoomCenterY) * curScale);
+            for (var i = 1, len = pts.length; i < len; i++) {
+                var pt = pts[i];
+                ctx.lineTo((pt.x - zoomCenterX) * curScale,
+                    (pt.y - zoomCenterY) * curScale);
+            }
+
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = '#25a2dd';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawFrontByUserDefine(ctx, pts) {
+            ctx.save();
+            ctx.translate(zoomCenterX, zoomCenterY);
+            var draw = true;
+            ctx.beginPath();
+            for (var i = 0, l = pts.length; i < l - 1; i++) {
+                var x = (pts[i].x - zoomCenterX) * curScale,
+                    y = (pts[i].y - zoomCenterY) * curScale,
+                    x2 = (pts[i + 1].x - zoomCenterX) * curScale,
+                    y2 = (pts[i + 1].y - zoomCenterY) * curScale,
+                    dx = (x2 - x), 
+                    dy = (y2 - y),
+                    slope = (dx !== 0) ? dy / dx : (dy > 0 ? 1e15 : -1e15),
+                    distRemaining = Math.sqrt(dx * dx + dy * dy),
+                    dashLength = 20;
+                
+                ctx.moveTo(x, y);
+                while (distRemaining >= 0.1) {
+                    if (dashLength > distRemaining){
+                        dashLength = distRemaining;
+                    }
+                    var xStep = Math.sqrt(dashLength * dashLength / (1 + slope * slope));
+                    if (dx < 0){
+                        xStep = -xStep
+                    }             
+                    x += xStep
+                    y += slope * xStep;;
+                    ctx[draw ? 'lineTo' : 'moveTo'](x,y);
+                    distRemaining -= dashLength;
+                    draw = !draw;
+                }
+            }
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawFrontBySystem(ctx, pts) {
+            ctx.save();
+            ctx.translate(zoomCenterX, zoomCenterY);
+            ctx.lineDashOffset = 0;
+            ctx.setLineDash([20, 10]);
+            ctx.beginPath();
+            ctx.moveTo((pts[0].x - zoomCenterX) * curScale,
+                (pts[0].y - zoomCenterY) * curScale);
+            for (var i = 1, len = pts.length; i < len; i++) {
+                var pt = pts[i];
+                ctx.lineTo((pt.x - zoomCenterX) * curScale,
+                    (pt.y - zoomCenterY) * curScale);
+            }
+
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function selectTypeFunc(type) {
+            selectType = type;
+            drawArrowLine(ctx, pts);
+        }
+
+    </script>
+</body>
+</html>

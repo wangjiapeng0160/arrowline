@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ArrowLine</title>
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="arrowCanvas" style="width: 100%; height: 100%;border: solid 1px gray"></canvas>
+    <script type="text/javascript">
+        var winWidth = window.innerWidth;
+        var winHeight = window.innerHeight;
+        var cvs = document.querySelector('#arrowCanvas');
+        cvs.width = winWidth;
+        cvs.height = winHeight;
+        var ctx = arrowCanvas.getContext('2d');
+        var pts = [{x: 50,y: 50}, {x: 100,y: 50},
+            {x: 100, y: 500}, {x: 200,y: 400},
+            {x: 500,y: 500}, {x: 650,y: 300}
+        ];
+
+        drawArrowLine(ctx, pts);
+
+        function drawArrowLine(ctx, pts) {
+            drawBack(ctx, pts);
+            drawFront(ctx, pts);
+        }
+
+        function drawBack(ctx, pts) {
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (var i = 1, len = pts.length; i < len; i++) {
+                var pt = pts[i];
+                ctx.lineTo(pt.x, pt.y);
+            }
+
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = '#25a2dd';
+            ctx.stroke();
+        }
+
+        function drawFront(ctx, pts) {
+            var draw = true;
+            ctx.beginPath();
+            for (var i = 0, l = pts.length; i < l - 1; i++) {
+                var x = pts[i].x,
+                    y = pts[i].y,
+                    x2 = pts[i + 1].x,
+                    y2 = pts[i + 1].y,
+                    dx = (x2 - x), 
+                    dy = (y2 - y),
+                    slope = (dx !== 0) ? dy / dx : (dy > 0 ? 1e15 : -1e15),
+                    distRemaining = Math.sqrt(dx * dx + dy * dy),
+                    dashLength = 20;
+                
+                ctx.moveTo(x, y);
+                while (distRemaining >= 0.1) {
+                    if (dashLength > distRemaining){
+                        dashLength = distRemaining;
+                    }
+                    var xStep = Math.sqrt(dashLength * dashLength / (1 + slope * slope));
+                    if (dx < 0){
+                        xStep = -xStep
+                    }             
+                    x += xStep
+                    y += slope * xStep;;
+                    ctx[draw ? 'lineTo' : 'moveTo'](x,y);
+                    distRemaining -= dashLength;
+                    draw = !draw;
+                }
+            }
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+        }
+
+    </script>
+</body>
+</html>

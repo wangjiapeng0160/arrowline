@@ -7,4 +7,4 @@ dashline_canvas.html 是canvas实现的虚线(2种)
 
 dashline_svg.html 是svg实现的虚线
 
-weixin: gisfans
+微信: gisfans

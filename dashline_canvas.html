@@ -29,24 +29,24 @@
     <div class="toolbar">
         自定义虚线<input name="selType" type="radio" value="0" checked="1" onclick="selectTypeFunc(0)" />系统虚线<input name="selType" type="radio" value="1" onclick="selectTypeFunc(1)" />
     </div>
-    <canvas id="arrowCanvas" style="width: 100%; height: 100%;border: solid 1px gray"></canvas>
+    <canvas id="dashCanvas" style="width: 100%; height: 100%;border: solid 1px gray"></canvas>
     <script type="text/javascript">
         // 纯Demo，封装性和OOP都不考虑
         var winWidth = window.innerWidth;
         var winHeight = window.innerHeight;
-        var cvs = document.querySelector('#arrowCanvas');
+        var cvs = document.querySelector('#dashCanvas');
         cvs.width = winWidth;
         cvs.height = winHeight;
-        var ctx = arrowCanvas.getContext('2d');
+        var ctx = dashCanvas.getContext('2d');
         var scale = 1;
         var curScale = scale;
         var preScale = scale;
         var zoomCenterX = 0;
         var zoomCenterY = 0;
         var selectType = 0;
-        var pts = [{x: 50,y: 50}, {x: 100,y: 50},
-            {x: 100, y: 500}, {x: 200,y: 400},
-            {x: 500,y: 500}, {x: 650,y: 300}
+        var pts = [{x: 100,y: 100}, {x: 200,y: 350},
+            {x: 300, y: 150}, {x: 400,y: 350},
+            {x: 500,y: 100}
         ];
 
         cvs.addEventListener('mousewheel', function (evt) {
@@ -72,7 +72,7 @@
                 fps: 60,
                 render: function (s) {
                     curScale = preScale + diff * s;// global var
-                    drawArrowLine(ctx, pts);
+                    drawDashLine(ctx, pts);
                 },
                 finish: function () {
                     preScale = scale;
@@ -85,9 +85,9 @@
             });
         });
 
-        drawArrowLine(ctx, pts);
+        drawDashLine(ctx, pts);
 
-        function drawArrowLine(ctx, pts) {
+        function drawDashLine(ctx, pts) {
             ctx.clearRect(0, 0, winWidth, winHeight);
             drawBack(ctx, pts);
 
@@ -176,7 +176,7 @@
 
         function selectTypeFunc(type) {
             selectType = type;
-            drawArrowLine(ctx, pts);
+            drawDashLine(ctx, pts);
         }
 
     </script>
